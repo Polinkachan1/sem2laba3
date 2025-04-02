@@ -196,6 +196,7 @@ int main() {
         display_menu();
         cout << "ВВЕДИТЕ НОМЕР ЗАДАНИЯ: ";
         cin >> identificator;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         system("cls");
         switch (identificator) {
         case 1:
@@ -206,7 +207,7 @@ int main() {
             cout << "Выберите действие:" << endl;
             cout << "1. Преобразовать выражение в обратную польскую нотацию." << endl;
             cout << "2. Преобразовать выражение в прямую польскую нотацию. " << endl;
-            expression = "1+2*5";
+            //expression = "1+2*5";
             cin >> i;
             switch (i) {
             case 1:
