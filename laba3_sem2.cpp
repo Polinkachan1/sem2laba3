@@ -4,7 +4,9 @@ using namespace std;
 
 struct Stack
 {
-    char number;
+    int number;
+    char oper;
+
     Stack* tail;
 };
 
@@ -16,9 +18,9 @@ void display_menu() {
     cout << "4. Реализует вычисления простого выражения и выражения, записанного в прямой польской нотациях. " << endl;
     cout << "5. Реализует вычисления простого выражения и выражения, записанного в обратной польских нотациях" << endl;
     cout << "6. ИДЗ" << endl;
-    cout << "6. Выход!" << endl;
+    cout << "7. Выход!" << endl;
 }
-void push(Stack*& top, char num) {
+void push(Stack*& top, int num) {
     Stack* new_elem = new Stack;
     new_elem->number = num;
     new_elem->tail = top;    
@@ -34,6 +36,23 @@ char pop(Stack*& top) {
     delete last_elem;
     return popped_num;
 }
+void push_op(Stack*& top, char oper) {
+    Stack* new_elem = new Stack;
+    new_elem->oper = oper;
+    new_elem->tail = top;
+    top = new_elem;
+}
+char pop_op(Stack*& top) {
+    if (top == nullptr) {
+        cout << "Ошибка: Стек пуст!" << endl;
+        return '\0';
+    }
+    Stack* last_elem = top;
+    char popped_op = top->oper;
+    top = top->tail;
+    delete last_elem;
+    return popped_op;
+}
 int priority_of_operations(char elem) {
     switch (elem) {
     case '-':case '+': return 1;
@@ -42,155 +61,188 @@ int priority_of_operations(char elem) {
     }
 }
 char top(Stack* top_elem) {
-    if (top_elem == nullptr) {
-        throw std::runtime_error("Стек пуст!");
-    }
-    return top_elem->number;
+    return top_elem?top_elem->oper:'\n';
 }
-void for_calc(Stack*& stack,char elem) {
-    int first = pop(stack);
-    int second = pop(stack);
-    int res = 0;
+int for_calc(Stack*& stack,char elem, int right, int left) {
+    int result = 0;
     switch (elem) {
+    case '+':
+        result = left + right;
+        cout << right << "  +  " << left << " = " << result << endl;
+        break;
     case '-':
-        res = first - second;
-        cout << first << '-' << second;
+        result = left - right;
+        cout << left << "  -  " << right << " = " << result << endl;
         break;
-    case '+':  
-        res = first + second;
-        cout << first << '+' << second;
+    case '*':
+        result = left * right;
+        cout << left << "  *  " << right << " = " << result << endl;
         break;
-    case '*': 
-        res = first * second;
-        cout << first << '*' << second << ' = ' << res << endl;
-        break;
-    case '/': 
-        res = first / second;
-        cout << first << '/' << second << ' = ' << res << endl;
-        break;
-    }
-    push(stack, res);
-}
-string make_reverse_polish_notation(string expression) {
-    string result = "", make_num = "";
-    Stack* stack = 0;
-    for (int i = 0; i < expression.length(); i++) {
-        char elem = expression[i];
-        if (isdigit(elem)) {
-            make_num += elem;
+    case '/':
+        if (right == 0) {
+            cout << "Ошибка: Деление на ноль!" << endl;
+            return 0;
         }
-        else {
-            if (!make_num.empty()) {
-                result += make_num;
-                result += ' ';
-                make_num.clear();
-            }
-            if (elem == '(') {
-                push(stack, elem);
-            }
-            else if (elem == ')') {
-                while (stack != nullptr and stack->number != '(') {
-                    result += pop(stack);
-                    result += ' ';
-                }
-                pop(stack);
-            }
-            else {
-                while (stack != nullptr and priority_of_operations(stack->number) >= priority_of_operations(elem)) {
-                    result += pop(stack);
-                    result += ' ';
-                }
-                push(stack, elem);
-            }
-        }
-
-    }
-    if (!make_num.empty()) {
-        result += make_num;
-        result += ' '; 
-    }
-    while (stack != nullptr) {
-        result += pop(stack);
-        result += ' ';
+        result = left / right;
+        cout << left << "  /  " << right << " = " << result << endl;
+        break;
+    default:
+        cout << "Ошибка: Неизвестный оператор!" << endl;
+        return 0;
     }
     return result;
+}
+string make_reverse_polish_notation(string& expression) {
+    Stack* stack = nullptr;
+    string output = "";
+    for (int i = 0; i<expression.length(); i++) {
+        char elem = expression[i];
+        if (elem == ' ') {
+            continue;
+        }
+
+        if (isdigit(elem)) {
+            while (isdigit(expression[i])) {
+                output += expression[i++];
+            }
+            output += ' ';
+            i--;
+        }
+        else if (elem == '(') {
+            push_op(stack, elem);
+        }
+        else if (elem == ')') {
+            while (stack != nullptr && stack->oper != '(') {
+                output += pop_op(stack);
+                output += ' ';
+            }
+            pop_op(stack);
+        }
+        else if (elem == '+' || elem == '-' || elem == '*' || elem == '/') {
+            while (stack != nullptr && priority_of_operations(stack->oper) >= priority_of_operations(elem)) {
+                output += pop_op(stack);
+                output += ' ';
+            }
+            push_op(stack, elem);
+        }
+    }
+    while (stack != nullptr) {
+        output += pop_op(stack);
+        output += ' ';
+    }
+    return output;
 }
 string make_direct_polish_notation(string expression) {
     Stack* stack = nullptr;
-    string result = "", make_num = "";
+    string output = "";
     for (int i = expression.length()-1; i >= 0; i--) {
         char elem = expression[i];
+        if (elem == ' ') {
+            continue;
+        }
         if (isdigit(elem)) {
-            make_num += elem;
+            string value = "";
+            while (i >= 0 && isdigit(expression[i])) {
+                value += expression[i];
+                i--;
+            }
+            output += value + ' ';
+            i++;
         }
-        else {
-            if (!make_num.empty()) {
-                result += make_num;
-                result += ' ';
-                make_num.clear();
-            }
-            if (elem == ')') {
-                push(stack, elem);
-            }
-            else if (elem == '(') {
-                while (stack != nullptr && top(stack) != ')') {
-                    result += pop(stack);
-                    result += ' ';
-                }
-                pop(stack);
-            }
-            else {
-                while (stack != nullptr && priority_of_operations(top(stack)) > priority_of_operations(elem)) {
-                    result += pop(stack);
-                    result += ' ';
-                }
-                push(stack, elem);
-            }
+        else if (elem == ')') {
+            push_op(stack, elem);
         }
-    }
-    if (!make_num.empty()) {
-        result += make_num;
-        result += ' ';
+        else if (elem == '(') {
+            while (stack != nullptr && top(stack) != ')') {
+                output += pop_op(stack);
+                output += ' ';
+            }
+            pop_op(stack);
+        }
+        else if (elem == '+' || elem == '-' || elem == '*' || elem == '/') {
+            while (stack != nullptr && priority_of_operations(top(stack)) >= priority_of_operations(elem)) {
+                output += pop_op(stack);
+                output += ' ';
+            }
+            push_op(stack, elem);
+        }
+
     }
     while (stack != nullptr) {
-        result += pop(stack);
-        result += ' ';
+        output += pop_op(stack);
+        output += ' ';
     }
-    reverse(result.begin(), result.end());
-    return result;
+    reverse(output.begin(), output.end());
+    return output;
 }
 void checking_simple_expression(string expression) {}
 void checking_reverse_polish_notation(string expression) {}
 void checking_direct_polish_notation(string expression) {}
 void calculate_simple_expression(string expression) {}
 int calculate_expression_in_reverse_polish_notation(string expression) {
-    string result = "", make_num = "";
-    Stack* stack = 0;
+    Stack* stack = nullptr;
+    string value;
     for (int i = 0; i < expression.length(); i++) {
         char elem = expression[i];
+        if (elem == ' ') {
+            continue;
+        }
         if (isdigit(elem)) {
-            make_num += elem;
-        }
-        else {
-            if (!make_num.empty()) {
-                push(stack, stoi(make_num));
-                make_num.clear();
+            string value = "";
+            while (isdigit(expression[i])) {
+                value += expression[i];
+                i++;
             }
-            else {
-                for_calc(stack, elem);
-            }
+            int res = stoi(value);
+            push(stack, res);
+            i--;
         }
-
+        else if (elem == '+' || elem == '-' || elem == '*' || elem == '/') {
+            int right = pop(stack);
+            int left = pop(stack);
+            int result = for_calc(stack, elem, right,left);
+            push(stack, result);
+        }
     }
-    int answ = pop(stack);
-    return answ;
-
+    if (!value.empty()) {
+        push(stack, stoi(value));
+    }
+    return pop(stack);
 }
-void calculate_expression_in_direct_polish_notation(string expression) {}
+int calculate_expression_in_direct_polish_notation(string expression) {
+    Stack* stack = nullptr;
+    string value;
+    for (int i = expression.length()-1; i  >=0; i--) {
+        char elem = expression[i];
+        if (elem == ' ') {
+            continue;
+        }
+        if (isdigit(elem)) {
+            string value = "";
+            while (isdigit(expression[i])) {
+                value += expression[i];
+                i--;
+            }
+            reverse(value.begin(), value.end());
+            int res = stoi(value);
+            push(stack, res);
+            i++;
+        }
+        else if (elem == '+' || elem == '-' || elem == '*' || elem == '/') {
+            int right = pop(stack);
+            int left = pop(stack);
+            int result = for_calc(stack, elem, left, right);
+            push(stack, result);
+        }
+    }
+    return pop(stack);
+}
+void calculate_expression_in_simple_expression(string expression) {
+}
 void idz() {}
 int main() {
     setlocale(0, "");
-    int identificator, i;
+    int identificator, i,res;
     string expression,reverse_pol_not, direct_pol_not;
     while (true) {
         display_menu();
@@ -207,7 +259,6 @@ int main() {
             cout << "Выберите действие:" << endl;
             cout << "1. Преобразовать выражение в обратную польскую нотацию." << endl;
             cout << "2. Преобразовать выражение в прямую польскую нотацию. " << endl;
-            //expression = "1+2*5";
             cin >> i;
             switch (i) {
             case 1:
@@ -228,11 +279,14 @@ int main() {
             checking_direct_polish_notation(expression);
             break;
         case 4:
-            expression = "(3-1)+4";
-            cout<<calculate_expression_in_reverse_polish_notation(expression)<<endl;
+            cout << "Полученная  обратная польская нотация:  " << reverse_pol_not << endl;
+            res = calculate_expression_in_reverse_polish_notation(reverse_pol_not);
+            cout << res << endl;
             break;
         case 5:
-            idz();
+            cout << "Полученная прямая польская нотация:  " << direct_pol_not << endl;
+            res = calculate_expression_in_direct_polish_notation(direct_pol_not);
+            cout << res << endl;
             break;
         case 6:
             cout << "Выход!" << endl;
