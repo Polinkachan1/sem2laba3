@@ -20,6 +20,31 @@ void display_menu() {
     cout << "6. ИДЗ" << endl;
     cout << "7. Выход!" << endl;
 }
+string change_unknown(string expression,int val, char elem) {
+    string value = to_string(val);
+    string res;
+    for (int i = 0; i < expression.length(); i++) {
+        if (expression[i] == elem) {
+            res += value;
+        }
+        else {
+            res += expression[i];
+        }
+    }
+    return res;
+}
+string replace_unknown(string expression) {
+    int value;
+    for (int i = 0; i < expression.length(); i++) {
+        char elem = expression[i];
+        if (isalpha(elem)) {
+            cout << "Введите значение для переменной '" << elem << "': ";
+            cin >> value;
+            expression = change_unknown(expression, value, elem);
+        }
+    }
+    return expression;
+}
 void push(Stack*& top, int num) {
     Stack* new_elem = new Stack;
     new_elem->number = num;
@@ -254,6 +279,8 @@ int main() {
         case 1:
             system("cls");
             getline(cin, expression);
+            expression = replace_unknown(expression);
+            cout << expression << endl;
             break;
         case 2:
             cout << "Выберите действие:" << endl;
