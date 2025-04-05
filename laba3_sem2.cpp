@@ -51,12 +51,12 @@ void push(Stack*& top, int num) {
     new_elem->tail = top;    
     top = new_elem;          
 }
-char pop(Stack*& top) {
+int pop(Stack*& top) {
     if (top == nullptr) {
         return '\0';
     }
     Stack* last_elem = top;
-    char popped_num = top->number;
+    int popped_num = top->number;
     top = top->tail;
     delete last_elem;
     return popped_num;
@@ -69,7 +69,6 @@ void push_op(Stack*& top, char oper) {
 }
 char pop_op(Stack*& top) {
     if (top == nullptr) {
-        cout << "Ошибка: Стек пуст!" << endl;
         return '\0';
     }
     Stack* last_elem = top;
@@ -131,6 +130,7 @@ string make_reverse_polish_notation(string& expression) {
                 output += expression[i++];
             }
             output += ' ';
+            cout << "Строка сейчас: " << output << endl;
             i--;
         }
         else if (elem == '(') {
@@ -140,6 +140,7 @@ string make_reverse_polish_notation(string& expression) {
             while (stack != nullptr && stack->oper != '(') {
                 output += pop_op(stack);
                 output += ' ';
+                cout << "Строка сейчас: " << output << endl;
             }
             pop_op(stack);
         }
@@ -147,6 +148,7 @@ string make_reverse_polish_notation(string& expression) {
             while (stack != nullptr && priority_of_operations(stack->oper) >= priority_of_operations(elem)) {
                 output += pop_op(stack);
                 output += ' ';
+                cout << "Строка сейчас: " << output << endl;
             }
             push_op(stack, elem);
         }
@@ -172,22 +174,25 @@ string make_direct_polish_notation(string expression) {
                 i--;
             }
             output += value + ' ';
+            cout <<"Строка сейчас: "<< output << endl;
             i++;
         }
         else if (elem == ')') {
             push_op(stack, elem);
         }
         else if (elem == '(') {
-            while (stack != nullptr && top(stack) != ')') {
+            while (stack != nullptr && stack->oper != ')') {
                 output += pop_op(stack);
                 output += ' ';
+                cout << "Строка сейчас: " << output << endl;
             }
             pop_op(stack);
         }
         else if (elem == '+' || elem == '-' || elem == '*' || elem == '/') {
-            while (stack != nullptr && priority_of_operations(top(stack)) >= priority_of_operations(elem)) {
+            while (stack != nullptr && priority_of_operations(stack->oper) > priority_of_operations(elem)) {
                 output += pop_op(stack);
                 output += ' ';
+                cout << "Строка сейчас: " << output << endl;
             }
             push_op(stack, elem);
         }
@@ -335,6 +340,7 @@ int calculate_simple_expression(string expression) {
                 i++;
             }
             int res = stoi(value);
+            cout <<"Текущее число: "<< res << endl;
             push(stack_for_nums, res);
             i--;
         }
@@ -427,6 +433,7 @@ int calculate_expression_in_direct_polish_notation(string expression) {
             }
             reverse(value.begin(), value.end());
             int res = stoi(value);
+            cout <<"Число, которое нашли: "<< res << endl;
             push(stack, res);
             i++;
         }
@@ -463,14 +470,12 @@ int main() {
             cin >> i;
             switch (i) {
             case 1:
-                cout << "Ваше выражение в обратной польской нотации: ";
                 reverse_pol_not =  make_reverse_polish_notation(expression);
-                cout << reverse_pol_not<< endl;
+                cout << "Ваше выражение в обратной польской нотации: " << reverse_pol_not<< endl;
                 break;
             case 2:
-                cout << "Ваше выражение в прямой польской нотации: ";
                 direct_pol_not = make_direct_polish_notation(expression);
-                cout << direct_pol_not<<endl;
+                cout << "Ваше выражение в прямой польской нотации: " << direct_pol_not<<endl;
                 break;
             }
             break;
